@@ -165,6 +165,35 @@ class RemoteSecurePayAuTest < Test::Unit::TestCase
     assert_equal 'Duplicate Client ID Found', response.message
   end
 
+  # Test that a stored card can replaced with new credit card and used for payment
+  def test_successful_payment_with_re_stored_card
+    # Setup stored card
+    @gateway.unstore('billing1234') rescue nil
+    @gateway.store(@credit_card, @billing_options) rescue nil
+
+    # Replace stored card
+    @gateway.unstore('billing1234') rescue nil
+
+    assert response = @gateway.store(
+      credit_card('4444333322221111', {month: 9, year: 16}),
+      {billing_id: 'billing1234', amount: 16000}
+    )
+    assert_success response
+    assert_equal response.params['pan'], '444433...111'
+    assert_equal response.params['expiry_date'], '09/16'
+    assert_equal 'Successful', response.message
+
+    # Pay with new card
+    assert response = @gateway.purchase(12300, 'billing1234', @options)
+    assert_equal response.params['amount'], '12300'
+    assert_equal response.params['ponum'], 'order123'
+    assert_success response
+    assert_equal response.params['pan'], '444433...111'
+    assert_equal response.params['expiry_date'], '09/16'
+
+    assert_equal 'Approved', response.message
+  end
+
   def test_successful_triggered_payment
     @gateway.store(@credit_card, @billing_options) rescue nil # Ensure it already exists
 
