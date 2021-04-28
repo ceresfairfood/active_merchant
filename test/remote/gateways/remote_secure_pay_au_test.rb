@@ -25,6 +25,11 @@ class RemoteSecurePayAuTest < Test::Unit::TestCase
       billing_address: address,
       description: 'Store Purchase'
     }
+
+    @billing_options = {
+      billing_id: 'billing1234',
+      amount: 15000
+    }
   end
 
   def test_successful_purchase
@@ -126,44 +131,44 @@ class RemoteSecurePayAuTest < Test::Unit::TestCase
   end
 
   def test_successful_unstore
-    @gateway.store(@credit_card, {billing_id: 'test1234', amount: 15000}) rescue nil
+    @gateway.store(@credit_card, @billing_options) rescue nil
 
-    assert response = @gateway.unstore('test1234')
+    assert response = @gateway.unstore('billing1234')
     assert_success response
 
     assert_equal 'Successful', response.message
   end
 
   def test_repeat_unstore
-    @gateway.unstore('test1234') rescue nil # Ensure it is already missing
+    @gateway.unstore('billing1234') rescue nil # Ensure it is already missing
 
-    response = @gateway.unstore('test1234')
+    response = @gateway.unstore('billing1234')
 
     assert_success response
   end
 
   def test_successful_store
-    @gateway.unstore('test1234') rescue nil
+    @gateway.unstore('billing1234') rescue nil
 
-    assert response = @gateway.store(@credit_card, {billing_id: 'test1234', amount: 15000})
+    assert response = @gateway.store(@credit_card, @billing_options)
     assert_success response
 
     assert_equal 'Successful', response.message
   end
 
   def test_failed_store
-    @gateway.store(@credit_card, {billing_id: 'test1234', amount: 15000}) rescue nil # Ensure it already exists
+    @gateway.store(@credit_card, @billing_options) rescue nil # Ensure it already exists
 
-    assert response = @gateway.store(@credit_card, {billing_id: 'test1234', amount: 15000})
+    assert response = @gateway.store(@credit_card, @billing_options)
     assert_failure response
 
     assert_equal 'Duplicate Client ID Found', response.message
   end
 
   def test_successful_triggered_payment
-    @gateway.store(@credit_card, {billing_id: 'test1234', amount: 15000}) rescue nil # Ensure it already exists
+    @gateway.store(@credit_card, @billing_options) rescue nil # Ensure it already exists
 
-    assert response = @gateway.purchase(12300, 'test1234', @options)
+    assert response = @gateway.purchase(12300, 'billing1234', @options)
     assert_success response
     assert_equal response.params['amount'], '12300'
     assert_equal response.params['ponum'], 'order123'
@@ -172,9 +177,9 @@ class RemoteSecurePayAuTest < Test::Unit::TestCase
   end
 
   def test_failure_triggered_payment
-    @gateway.unstore('test1234') rescue nil # Ensure its no longer there
+    @gateway.unstore('billing1234') rescue nil # Ensure its no longer there
 
-    assert response = @gateway.purchase(12300, 'test1234', @options)
+    assert response = @gateway.purchase(12300, 'billing1234', @options)
     assert_failure response
 
     assert_equal 'Payment not found', response.message
