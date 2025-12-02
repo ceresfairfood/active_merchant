@@ -25,7 +25,7 @@ module ActiveMerchant # :nodoc:
         post = {}
 
         add_amount(post, money, options)
-        add_creditcard(post, creditcard, options)
+        add_creditcard(post, creditcard, options) unless creditcard.nil?
         add_extra_options(post, options)
         add_order_id(post, options)
         add_ip(post, options)
