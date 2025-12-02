@@ -31,6 +31,7 @@ module ActiveMerchant # :nodoc:
         add_ip(post, options)
         add_metadata(post, options)
         add_three_ds(post, options)
+        add_wallet(post, options)
 
         commit(:post, 'purchases', post)
       end
@@ -154,6 +155,15 @@ module ActiveMerchant # :nodoc:
           ver: formatted_enrollment(three_d_secure[:enrolled]),
           threeds_version: three_d_secure[:version],
           directory_server_txn_id: three_d_secure[:ds_transaction_id]
+        }.compact
+      end
+
+      def add_wallet(post, options)
+        return unless wallet = options[:wallet]
+
+        post[:wallet] = {
+          type: wallet[:type],
+          token: wallet[:token],
         }.compact
       end
 

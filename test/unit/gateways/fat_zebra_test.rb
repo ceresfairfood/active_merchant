@@ -109,6 +109,26 @@ class FatZebraTest < Test::Unit::TestCase
     assert response.test?
   end
 
+  def test_successful_purchase_with_wallet_apple_pay
+    @gateway.expects(:ssl_request).returns(successful_apple_pay_purchase_response)
+
+    @options[:wallet] = {
+      "type":"APPLE",
+      "token": {
+        "paymentData": {
+           "test": "value"
+        }
+      }
+    }
+
+    assert response = @gateway.purchase(@amount, nil, @options)
+    assert_success response
+
+    assert_equal '85230-P-4QXDYKWJ|purchases', response.authorization
+    assert response.params["response"]["wallet"].include? "card_source_reference"
+    assert response.test?
+  end
+
   def test_successful_authorization
     @gateway.expects(:ssl_request).with { |_method, _url, body, _headers|
       body.match '"capture":false'
@@ -400,6 +420,51 @@ class FatZebraTest < Test::Unit::TestCase
       errors: []
     }.to_json
   end
+
+  def successful_apple_pay_purchase_response
+    {
+      "successful": true,
+      "response": {
+        "authorization": "678533",
+        "id": "85230-P-4QXDYKWJ",
+        card_number: 'XXXXXXXXXXXX1111',
+        card_holder: 'John Smith',
+        card_expiry: '2011-10-31',
+        "card_token": "lsfnwgtq0krqq9iw9frq",
+        "card_type": "VISA",
+        "card_category": "Charge Card",
+        "card_subcategory": "Standard",
+        "amount": 9100,
+        "decimal_amount": 91,
+        "successful": true,
+        "message": "Approved",
+        "reference": "ABC123",
+        "currency": "AUD",
+        "transaction_id": "85230-P-4QXDYKWJ",
+        "settlement_date": "2025-11-27",
+        "transaction_date": "2025-11-27T17:16:05+11:00",
+        "response_code": "00",
+        "captured": true,
+        "captured_amount": 9100,
+        "rrn": "85230P4QXDYK",
+        "cvv_match": "M",
+        "metadata": {
+          "authorization_tracking_id": "",
+          "card_sequence_number": "",
+          "sca_exemption": "",
+          "least_cost_routed": "false",
+          "original_transaction_reference": ""
+        },
+        "addendum_data": {},
+        "wallet": {
+          "card_source_reference": "29081975d8d2809fd460fe89d6ed06b8b33504e340563248fccef5bf41f6bfe2"
+        }
+      },
+      "errors": [],
+      "test": true
+    }.to_json
+  end
+
 
   def declined_purchase_response
     {

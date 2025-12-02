@@ -257,4 +257,18 @@ class RemoteFatZebraTest < Test::Unit::TestCase
     assert_failure response
     assert_match(/version is not valid/, response.message)
   end
+
+  def test_failed_purchase_with_wallet_apple_pay
+    @options[:wallet] = {
+      "type":"APPLE",
+      "token": {
+        "paymentData": {
+           "test": "value"
+        }
+      }
+    }
+    assert response = @gateway.purchase(@amount, nil, @options)
+    assert_failure response
+    assert_match( /Unable to load credit card data from Wallet details/, response.message)
+  end
 end
